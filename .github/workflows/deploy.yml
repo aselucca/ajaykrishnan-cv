@@ -2,7 +2,7 @@ name: Deploy site to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
@@ -15,27 +15,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload static site
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: build
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # OPTIONAL but nice to have (disables Jekyll)
+      - name: Create .nojekyll
+        run: echo > .nojekyll
+
+      # Enable Pages + set up
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true  # <-- this fixes the "Get Pages site failed" error
+
+      # Upload the static site (root of repo)
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./
+
+      # Publish
       - name: Deploy to GitHub Pages
-        id: deploy
+        id: deployment
         uses: actions/deploy-pages@v4
